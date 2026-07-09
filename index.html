@@ -17,6 +17,13 @@
 
   <!-- SCHERMATA 1: inserimento frasi -->
   <section id="screen-input" class="screen">
+    <div class="settings-bar">
+      <label class="switch-label">
+        <input type="checkbox" id="toggle-hints" checked>
+        💡 Mostra i suggerimenti (esempi) durante l'analisi
+      </label>
+    </div>
+
     <h2>Scrivi una frase</h2>
     <textarea id="sentence-input" rows="2" placeholder="Es. Il bambino dorme."></textarea>
     <button id="btn-extract" class="btn btn-primary">Estrai le parole ➜</button>
@@ -46,6 +53,7 @@
     </div>
 
     <div id="wizard-card" class="wizard-card">
+      <div id="current-word-big" class="current-word-big"></div>
       <div id="breadcrumb" class="breadcrumb"></div>
       <h2 id="wizard-question" class="wizard-question"></h2>
 
@@ -65,6 +73,7 @@
 
     <div class="wizard-nav">
       <button id="btn-back" class="btn btn-ghost">◀ Indietro</button>
+      <button id="btn-skip" class="btn btn-skip">⏭ Non lo so, salta</button>
     </div>
   </section>
 

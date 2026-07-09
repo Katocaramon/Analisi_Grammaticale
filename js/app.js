@@ -3,8 +3,8 @@
 
   const STORAGE_KEY = "analisiGrammaticale_state_v1";
 
-  /** @type {{sentences: Array<{text:string, words: Array<{text:string, analysis: null|{category:string, parts:string[], display:string}}>}>}} */
-  let state = { sentences: [] };
+  /** @type {{sentences: Array<{text:string, words: Array<{text:string, analysis: null|{category:string, parts:string[], display:string, incomplete:boolean}}>}>, settings: {showHints: boolean}}} */
+  let state = { sentences: [], settings: { showHints: true } };
 
   let pendingWords = null; // array of strings while previewing a new sentence
 
@@ -30,6 +30,7 @@
         const parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.sentences)) {
           state = parsed;
+          if (!state.settings) state.settings = { showHints: true };
         }
       }
     } catch (e) { /* ignora */ }
@@ -76,6 +77,13 @@
   const btnCancelSentence = document.getElementById("btn-cancel-sentence");
   const sentenceListEl = document.getElementById("sentence-list");
   const btnStartAnalysis = document.getElementById("btn-start-analysis");
+  const toggleHints = document.getElementById("toggle-hints");
+
+  toggleHints.checked = state.settings.showHints;
+  toggleHints.addEventListener("change", () => {
+    state.settings.showHints = toggleHints.checked;
+    saveState();
+  });
 
   btnExtract.addEventListener("click", () => {
     const text = sentenceInput.value.trim();
@@ -206,6 +214,7 @@
 
   const sentenceContextEl = document.getElementById("sentence-context");
   const wordChipsNavEl = document.getElementById("word-chips-nav");
+  const currentWordBigEl = document.getElementById("current-word-big");
   const breadcrumbEl = document.getElementById("breadcrumb");
   const wizardQuestionEl = document.getElementById("wizard-question");
   const wizardOptionsEl = document.getElementById("wizard-options");
@@ -216,6 +225,7 @@
   const doneSummaryEl = document.getElementById("done-summary");
   const btnNextWord = document.getElementById("btn-next-word");
   const btnBack = document.getElementById("btn-back");
+  const btnSkip = document.getElementById("btn-skip");
 
   function startWordWizard(sentenceIndex, wordIndex) {
     wizard.sentenceIndex = sentenceIndex;
@@ -239,6 +249,10 @@
     renderSentenceContext();
     renderBreadcrumb();
 
+    const rootCls = wizard.history.length > 0 ? wizard.history[0].option.cls : null;
+    currentWordBigEl.className = "current-word-big" + (rootCls ? " " + rootCls : "");
+    currentWordBigEl.textContent = currentWord().text;
+
     const node = wizard.currentNode;
     wizardQuestionEl.textContent = node.question;
 
@@ -256,15 +270,12 @@
         btn.type = "button";
         btn.className = "btn btn-option";
         if (option.cls) btn.classList.add(option.cls);
-        else if (wizard.history.length > 0) {
-          const rootCls = wizard.history[0].option.cls;
-          if (rootCls) btn.classList.add(rootCls);
-        }
+        else if (rootCls) btn.classList.add(rootCls);
         const strong = document.createElement("span");
         strong.className = "option-label";
         strong.textContent = option.label;
         btn.appendChild(strong);
-        if (option.sub) {
+        if (option.sub && state.settings.showHints) {
           const sub = document.createElement("span");
           sub.className = "option-sub";
           sub.textContent = option.sub;
@@ -289,8 +300,9 @@
       chip.type = "button";
       chip.className = "nav-word-chip";
       if (idx === wizard.wordIndex) chip.classList.add("active");
-      if (word.analysis) chip.classList.add("done");
-      chip.textContent = word.text + (word.analysis ? " ✓" : "");
+      if (word.analysis) chip.classList.add(word.analysis.incomplete ? "incomplete" : "done");
+      const mark = word.analysis ? (word.analysis.incomplete ? " ⚠" : " ✓") : "";
+      chip.textContent = word.text + mark;
       chip.title = word.analysis ? word.analysis.display : "Non ancora analizzata";
       chip.addEventListener("click", () => {
         startWordWizard(wizard.sentenceIndex, idx);
@@ -301,20 +313,10 @@
 
   function renderBreadcrumb() {
     breadcrumbEl.innerHTML = "";
-    if (wizard.history.length === 0) {
-      breadcrumbEl.innerHTML = "<span class='muted'>Analizzando: <strong>" + escapeHtml(currentWord().text) + "</strong></span>";
-      return;
-    }
-    const label = document.createElement("span");
-    label.className = "muted";
-    label.textContent = "Parola: ";
-    breadcrumbEl.appendChild(label);
-    const word = document.createElement("strong");
-    word.textContent = currentWord().text + "  →  ";
-    breadcrumbEl.appendChild(word);
+    if (wizard.history.length === 0) return;
     wizard.history.forEach((entry, i) => {
       const chip = document.createElement("span");
-      chip.className = "crumb";
+      chip.className = "crumb" + (entry.option.skipped ? " crumb-skipped" : "");
       chip.textContent = entry.option.label;
       breadcrumbEl.appendChild(chip);
       if (i < wizard.history.length - 1) {
@@ -365,12 +367,33 @@
     renderWizard();
   });
 
-  function finishWord() {
-    const category = wizard.history[0].option.label;
-    const parts = wizard.history.slice(1).map((h) => h.option.value).filter((v) => v);
-    const display = parts.length ? category + ": " + parts.join(", ") : category;
+  btnSkip.addEventListener("click", () => {
+    const node = wizard.currentNode;
+    const target = node.skipNext;
+    wizard.history.push({ node, option: { label: "non so", value: null, skipped: true } });
+    if (target) {
+      wizard.currentNode = target;
+      renderWizard();
+    } else {
+      finishWord();
+    }
+  });
 
-    currentWord().analysis = { category, parts, display };
+  function finishWord() {
+    const rootSkipped = wizard.history.length > 0 && wizard.history[0].option.skipped;
+    const category = rootSkipped ? null : wizard.history[0].option.label;
+    const parts = rootSkipped ? [] : wizard.history.slice(1).map((h) => h.option.value).filter((v) => v);
+    const incomplete = category === null || wizard.history.some((h) => h.option.skipped);
+
+    let display;
+    if (category === null) {
+      display = "❓ non analizzata (saltata)";
+    } else {
+      display = parts.length ? category + ": " + parts.join(", ") : category;
+      if (incomplete) display += "  ⚠ incompleta";
+    }
+
+    currentWord().analysis = { category, parts, display, incomplete };
     saveState();
 
     renderSentenceContext();
@@ -432,6 +455,7 @@
       sentence.words.forEach((word, wIdx) => {
         const li = document.createElement("li");
         const display = word.analysis ? word.analysis.display : "(non analizzata)";
+        if (word.analysis && word.analysis.incomplete) li.classList.add("incomplete-row");
         li.innerHTML = "<strong>" + escapeHtml(word.text) + "</strong> — " + escapeHtml(display);
         const editBtn = document.createElement("button");
         editBtn.className = "btn btn-ghost btn-small";

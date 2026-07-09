@@ -7,11 +7,14 @@
  *   - value: frammento di testo aggiunto al risultato finale (null = non aggiunge nulla)
  *   - next: nodo successivo (se assente, la parola è conclusa)
  * Un nodo "text" chiede invece di scrivere una parola (es. l'infinito del verbo).
+ * Un nodo può anche avere "skipNext": il nodo a cui saltare se il bambino non sa
+ * rispondere a questa domanda (se assente, saltare conclude la parola qui).
  */
 
 function numeroNode(next) {
   return {
     question: "Che NUMERO ha?",
+    skipNext: next,
     options: [
       { label: "SINGOLARE", sub: "una sola cosa", value: "singolare", next },
       { label: "PLURALE", sub: "più di una cosa", value: "plurale", next }
@@ -20,14 +23,15 @@ function numeroNode(next) {
 }
 
 function genereNumero(next, invariabile) {
+  const numero = numeroNode(next);
   const options = [
-    { label: "MASCHILE", value: "maschile", next: numeroNode(next) },
-    { label: "FEMMINILE", value: "femminile", next: numeroNode(next) }
+    { label: "MASCHILE", value: "maschile", next: numero },
+    { label: "FEMMINILE", value: "femminile", next: numero }
   ];
   if (invariabile) {
     options.push({ label: "INVARIABILE", sub: "non cambia mai", value: "invariabile", next });
   }
-  return { question: "Che GENERE ha?", options };
+  return { question: "Che GENERE ha?", skipNext: numero, options };
 }
 
 // ---------- NOME ----------
@@ -57,23 +61,28 @@ const NOME_CARATTERISTICA = {
 
 const NOME_CONCRETEZZA = {
   question: "È CONCRETO (si vede o si tocca) o ASTRATTO (un'idea, un sentimento)?",
+  skipNext: NOME_CARATTERISTICA,
   options: [
     { label: "CONCRETO", sub: "es. tavolo, cane", value: "concreto", next: NOME_CARATTERISTICA },
     { label: "ASTRATTO", sub: "es. amore, paura", value: "astratto", next: NOME_CARATTERISTICA }
   ]
 };
 
+const NOME_GENERE_NUMERO = genereNumero(NOME_CONCRETEZZA);
+
 const NOME_SPECIE = {
   question: "Indica una PERSONA, un ANIMALE o una COSA?",
+  skipNext: NOME_GENERE_NUMERO,
   options: [
-    { label: "PERSONA", value: "di persona", next: genereNumero(NOME_CONCRETEZZA) },
-    { label: "ANIMALE", value: "di animale", next: genereNumero(NOME_CONCRETEZZA) },
-    { label: "COSA", value: "di cosa", next: genereNumero(NOME_CONCRETEZZA) }
+    { label: "PERSONA", value: "di persona", next: NOME_GENERE_NUMERO },
+    { label: "ANIMALE", value: "di animale", next: NOME_GENERE_NUMERO },
+    { label: "COSA", value: "di cosa", next: NOME_GENERE_NUMERO }
   ]
 };
 
 const NOME = {
   question: "È un nome COMUNE o PROPRIO?",
+  skipNext: NOME_SPECIE,
   options: [
     { label: "COMUNE", sub: "bambino, cane, città", value: "comune", next: NOME_SPECIE },
     { label: "PROPRIO", sub: "Marco, Roma, Fido", value: "proprio", next: NOME_SPECIE }
@@ -82,25 +91,31 @@ const NOME = {
 
 // ---------- ARTICOLO ----------
 
+const ARTICOLO_GENERE_NUMERO = genereNumero();
+
 const ARTICOLO = {
   question: "È un articolo DETERMINATIVO o INDETERMINATIVO?",
+  skipNext: ARTICOLO_GENERE_NUMERO,
   options: [
-    { label: "DETERMINATIVO", sub: "il, lo, la, i, gli, le", value: "determinativo", next: genereNumero() },
-    { label: "INDETERMINATIVO", sub: "un, uno, una", value: "indeterminativo", next: genereNumero() }
+    { label: "DETERMINATIVO", sub: "il, lo, la, i, gli, le", value: "determinativo", next: ARTICOLO_GENERE_NUMERO },
+    { label: "INDETERMINATIVO", sub: "un, uno, una", value: "indeterminativo", next: ARTICOLO_GENERE_NUMERO }
   ]
 };
 
 // ---------- PRONOME ----------
 
+const PRONOME_GENERE_NUMERO = genereNumero(undefined, true);
+
 const PRONOME = {
   question: "Che tipo di pronome è?",
+  skipNext: PRONOME_GENERE_NUMERO,
   options: [
-    { label: "PERSONALE", sub: "io, tu, egli, noi...", value: "personale", next: genereNumero(undefined, true) },
-    { label: "POSSESSIVO", sub: "mio, tuo, nostro...", value: "possessivo", next: genereNumero(undefined, true) },
-    { label: "RELATIVO", sub: "che, il quale, cui...", value: "relativo", next: genereNumero(undefined, true) },
-    { label: "DIMOSTRATIVO", sub: "questo, quello, stesso...", value: "dimostrativo", next: genereNumero(undefined, true) },
-    { label: "INDEFINITO", sub: "nessuno, ognuno, qualcuno, niente...", value: "indefinito", next: genereNumero(undefined, true) },
-    { label: "NUMERALE", sub: "uno, cinque, primo, terzo...", value: "numerale", next: genereNumero(undefined, true) }
+    { label: "PERSONALE", sub: "io, tu, egli, noi...", value: "personale", next: PRONOME_GENERE_NUMERO },
+    { label: "POSSESSIVO", sub: "mio, tuo, nostro...", value: "possessivo", next: PRONOME_GENERE_NUMERO },
+    { label: "RELATIVO", sub: "che, il quale, cui...", value: "relativo", next: PRONOME_GENERE_NUMERO },
+    { label: "DIMOSTRATIVO", sub: "questo, quello, stesso...", value: "dimostrativo", next: PRONOME_GENERE_NUMERO },
+    { label: "INDEFINITO", sub: "nessuno, ognuno, qualcuno, niente...", value: "indefinito", next: PRONOME_GENERE_NUMERO },
+    { label: "NUMERALE", sub: "uno, cinque, primo, terzo...", value: "numerale", next: PRONOME_GENERE_NUMERO }
   ]
 };
 
@@ -152,8 +167,11 @@ const AGGETTIVO_DETERMINATIVO_TIPO = {
   ]
 };
 
+const AGGETTIVO_SKIP_GENERE_NUMERO = genereNumero(undefined, true);
+
 const AGGETTIVO = {
   question: "È un aggettivo QUALIFICATIVO o DETERMINATIVO?",
+  skipNext: AGGETTIVO_SKIP_GENERE_NUMERO,
   options: [
     { label: "QUALIFICATIVO", sub: "descrive com'è, es. bello, alto", value: "qualificativo", next: genereNumero(AGGETTIVO_GRADO, true) },
     { label: "DETERMINATIVO", sub: "indica di chi è, quanti sono...", value: "determinativo", next: genereNumero(AGGETTIVO_DETERMINATIVO_TIPO, true) }
@@ -197,6 +215,7 @@ const VERBO_TEMPO_FUTURO_TIPO = {
 
 const VERBO_TEMPO_FINITO = {
   question: "Che TEMPO è?",
+  skipNext: VERBO_FORMA,
   options: [
     { label: "PRESENTE", sub: "es. gioco", value: "tempo presente", next: VERBO_FORMA },
     { label: "PASSATO", next: VERBO_TEMPO_PASSATO_TIPO },
@@ -206,6 +225,7 @@ const VERBO_TEMPO_FINITO = {
 
 const VERBO_MODO_FINITO = {
   question: "Quale modo finito?",
+  skipNext: VERBO_TEMPO_FINITO,
   options: [
     { label: "INDICATIVO", sub: "gioco", value: "modo indicativo", next: VERBO_TEMPO_FINITO },
     { label: "CONGIUNTIVO", sub: "che io giochi", value: "modo congiuntivo", next: VERBO_TEMPO_FINITO },
@@ -216,6 +236,7 @@ const VERBO_MODO_FINITO = {
 
 const VERBO_MODO_INDEFINITO = {
   question: "Quale modo indefinito?",
+  skipNext: VERBO_FORMA,
   options: [
     { label: "INFINITO", sub: "parlare", value: "modo infinito", next: VERBO_FORMA },
     { label: "PARTICIPIO", sub: "parlato", value: "modo participio", next: VERBO_FORMA },
@@ -233,6 +254,7 @@ const VERBO_MODO = {
 
 const VERBO_PERSONA = {
   question: "Che persona è?",
+  skipNext: VERBO_MODO,
   options: [
     { label: "1ª SINGOLARE", sub: "io", value: "1ª persona singolare", next: VERBO_MODO },
     { label: "2ª SINGOLARE", sub: "tu", value: "2ª persona singolare", next: VERBO_MODO },
@@ -245,6 +267,7 @@ const VERBO_PERSONA = {
 
 const VERBO_CONIUGAZIONE = {
   question: "A quale coniugazione appartiene?",
+  skipNext: VERBO_PERSONA,
   options: [
     { label: "1ª (-ARE)", sub: "es. parlare", value: "1ª coniugazione", next: VERBO_PERSONA },
     { label: "2ª (-ERE)", sub: "es. temere", value: "2ª coniugazione", next: VERBO_PERSONA },
@@ -257,6 +280,7 @@ const VERBO = {
   type: "text",
   question: "Qual è l'INFINITO del verbo? (scrivi la forma base)",
   placeholder: "es. dormire, giocare, avere...",
+  skipNext: VERBO_CONIUGAZIONE,
   next: VERBO_CONIUGAZIONE
 };
 

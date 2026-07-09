@@ -51,6 +51,23 @@ html, body {
 
 h2 { text-align: center; }
 
+.settings-bar {
+  text-align: center;
+  margin-bottom: 14px;
+}
+.switch-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.switch-label input { width: 20px; height: 20px; cursor: pointer; }
+
 textarea#sentence-input {
   width: 100%;
   font-size: 1.2rem;
@@ -81,6 +98,7 @@ textarea#sentence-input {
 .btn-secondary { background: #fff3d6; color: var(--text); border: 2px solid #f0d99a; }
 .btn-success { background: var(--success); color: white; }
 .btn-ghost { background: transparent; color: var(--muted); box-shadow: none; border: 2px solid var(--border); }
+.btn-skip { background: #fff3d6; color: var(--text); border: 2px solid #f0d99a; }
 .btn-large { font-size: 1.3rem; padding: 18px 28px; display: block; margin: 20px auto; }
 .btn-small { font-size: 0.85rem; padding: 6px 10px; min-height: auto; }
 
@@ -159,6 +177,7 @@ textarea#sentence-input {
 }
 .nav-word-chip.active { border-color: var(--blue); background: #eaf2fc; font-weight: bold; }
 .nav-word-chip.done { color: var(--success); }
+.nav-word-chip.incomplete { color: var(--orange); }
 
 .wizard-card {
   background: var(--card-bg);
@@ -168,6 +187,24 @@ textarea#sentence-input {
   min-height: 260px;
 }
 
+.current-word-big {
+  text-align: center;
+  font-size: 2.6rem;
+  font-weight: 800;
+  padding: 8px 16px;
+  border-radius: 16px;
+  margin-bottom: 6px;
+}
+.current-word-big.cat-articolo { background: #e3f0fd; }
+.current-word-big.cat-nome { background: #e6f7ea; }
+.current-word-big.cat-aggettivo { background: #fdecdc; }
+.current-word-big.cat-pronome { background: #f2e6fb; }
+.current-word-big.cat-verbo { background: #fbe3e3; }
+.current-word-big.cat-preposizione { background: #e0f5f5; }
+.current-word-big.cat-congiunzione { background: #f7ecd2; }
+.current-word-big.cat-avverbio { background: #fbe3f0; }
+.current-word-big.cat-esclamazione { background: #ececec; }
+
 .breadcrumb {
   display: flex;
   flex-wrap: wrap;
@@ -175,6 +212,7 @@ textarea#sentence-input {
   align-items: center;
   margin-bottom: 10px;
   min-height: 1.4em;
+  justify-content: center;
 }
 .crumb {
   background: #f1ecdd;
@@ -182,6 +220,7 @@ textarea#sentence-input {
   padding: 3px 8px;
   font-size: 0.85rem;
 }
+.crumb-skipped { background: #fde4c8; font-style: italic; color: var(--muted); }
 .crumb-arrow { color: var(--muted); }
 
 .wizard-question {
@@ -259,6 +298,7 @@ textarea#sentence-input {
   border-bottom: 1px solid var(--border);
 }
 .summary-sentence li:last-child { border-bottom: none; }
+.summary-sentence li.incomplete-row { color: var(--orange); }
 
 .summary-actions { text-align: center; margin-top: 20px; }
 
