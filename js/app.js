@@ -18,38 +18,11 @@
   // ---------- persistenza ----------
 
   function saveState() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) { /* ignora, non è critico */ }
+    saveStateToStorage(STORAGE_KEY, state);
   }
 
   function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && Array.isArray(parsed.sentences)) {
-          state = parsed;
-          if (!state.settings) state.settings = { showHints: true };
-        }
-      }
-    } catch (e) { /* ignora */ }
-  }
-
-  // ---------- tokenizzazione ----------
-
-  function tokenizeSentence(text) {
-    return text
-      .split(/\s+/)
-      .map((tok) => tok.replace(/^[^\p{L}']+|[^\p{L}']+$/gu, ""))
-      .filter((tok) => tok.length > 0);
-  }
-
-  // ---------- utility di navigazione schermate ----------
-
-  function showScreen(id) {
-    document.querySelectorAll(".screen").forEach((el) => el.classList.add("hidden"));
-    document.getElementById(id).classList.remove("hidden");
+    state = loadStateFromStorage(STORAGE_KEY, state);
   }
 
   function findNextUnanalyzed() {
@@ -203,12 +176,6 @@
     const target = findNextUnanalyzed() || { s: 0, w: 0 };
     startWordWizard(target.s, target.w);
   });
-
-  function escapeHtml(str) {
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
-  }
 
   // ---------- SCHERMATA 2: wizard ----------
 
@@ -488,46 +455,31 @@
   btnGeneratePdf.addEventListener("click", generatePdf);
 
   function generatePdf() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const marginLeft = 48;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    let y = 56;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text("Analisi Grammaticale", marginLeft, y);
-    y += 22;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(new Date().toLocaleDateString("it-IT"), marginLeft, y);
-    y += 28;
-
+    const report = createPdfReport("Analisi Grammaticale");
     state.sentences.forEach((sentence, idx) => {
-      if (y > pageHeight - 80) { doc.addPage(); y = 56; }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      const title = (idx + 1) + ". " + sentence.text;
-      const titleLines = doc.splitTextToSize(title, pageWidth - marginLeft * 2);
-      doc.text(titleLines, marginLeft, y);
-      y += titleLines.length * 16 + 6;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
+      report.addHeading((idx + 1) + ". " + sentence.text);
       sentence.words.forEach((word) => {
         const display = word.analysis ? word.analysis.display : "(non analizzata)";
-        const line = "• " + word.text + " — " + display;
-        const lines = doc.splitTextToSize(line, pageWidth - marginLeft * 2 - 12);
-        if (y + lines.length * 14 > pageHeight - 40) { doc.addPage(); y = 56; }
-        doc.text(lines, marginLeft + 12, y);
-        y += lines.length * 14 + 4;
+        report.addLine("• " + word.text + " — " + display);
       });
-      y += 14;
+      report.addSpacer();
     });
-
-    doc.save("analisi_grammaticale.pdf");
+    report.save("analisi_grammaticale.pdf");
   }
+
+  const btnSendEmail = document.getElementById("btn-send-email");
+  btnSendEmail.addEventListener("click", () => {
+    const lines = [];
+    state.sentences.forEach((sentence, idx) => {
+      lines.push((idx + 1) + ". " + sentence.text);
+      sentence.words.forEach((word) => {
+        const display = word.analysis ? word.analysis.display : "(non analizzata)";
+        lines.push("   • " + word.text + " — " + display);
+      });
+      lines.push("");
+    });
+    openMailto("Analisi Grammaticale", lines.join("\n"));
+  });
 
   // ---------- avvio ----------
 

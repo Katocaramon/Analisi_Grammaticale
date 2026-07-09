@@ -21,6 +21,8 @@
 
 * { box-sizing: border-box; }
 
+.hidden { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -34,12 +36,55 @@ html, body {
 .app-header {
   text-align: center;
   padding: 16px 8px 8px;
+  position: relative;
 }
 .app-header h1 {
   margin: 0;
   font-size: 1.8rem;
   color: var(--blue);
 }
+.home-link {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.95rem;
+}
+
+.home-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 24px;
+}
+.home-card {
+  text-decoration: none;
+  color: var(--text);
+  background: var(--card-bg);
+  border: 3px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 24px;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  box-shadow: var(--shadow);
+  transition: transform 0.12s ease;
+}
+.home-card:active { transform: scale(0.97); }
+.home-card-icon { font-size: 3.4rem; }
+.home-card-title { font-size: 1.3rem; font-weight: 800; }
+.home-card-desc { color: var(--muted); font-size: 0.95rem; }
+.home-card-grammaticale { border-color: var(--blue); }
+.home-card-logica { border-color: var(--purple); }
 
 #app {
   max-width: 900px;
@@ -260,6 +305,21 @@ textarea#sentence-input {
 .btn-option.cat-avverbio { background: #fbe3f0; border-color: var(--pink); }
 .btn-option.cat-esclamazione { background: #ececec; border-color: var(--gray); }
 
+/* categorie analisi logica */
+.btn-option.cat-soggetto { background: #e3f0fd; border-color: var(--blue); }
+.btn-option.cat-predicato { background: #fbe3e3; border-color: var(--red); }
+.btn-option.cat-oggetto { background: #fdecdc; border-color: var(--orange); }
+.btn-option.cat-attributo { background: #f2e6fb; border-color: var(--purple); }
+.btn-option.cat-apposizione { background: #fbe3f0; border-color: var(--pink); }
+.btn-option.cat-indiretto { background: #e0f5f5; border-color: var(--teal); }
+
+.current-word-big.cat-soggetto { background: #e3f0fd; }
+.current-word-big.cat-predicato { background: #fbe3e3; }
+.current-word-big.cat-oggetto { background: #fdecdc; }
+.current-word-big.cat-attributo { background: #f2e6fb; }
+.current-word-big.cat-apposizione { background: #fbe3f0; }
+.current-word-big.cat-indiretto { background: #e0f5f5; }
+
 .wizard-text-input { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
 .wizard-text-input.hidden { display: none; }
 #text-answer {
@@ -278,6 +338,53 @@ textarea#sentence-input {
 .done-summary { font-size: 1.3rem; font-weight: bold; margin-bottom: 14px; }
 
 .wizard-nav { text-align: center; margin-top: 14px; }
+
+/* ---- analisi logica: banca parole ---- */
+
+.word-bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.bank-word-chip {
+  font-family: inherit;
+  font-size: 1.3rem;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 3px solid var(--border);
+  background: #f4f1e8;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.bank-word-chip.selected {
+  border-style: dashed;
+  border-color: var(--blue);
+  background: #eaf2fc;
+}
+.bank-word-chip.selected::after { content: " ☑"; }
+.bank-word-chip.assigned { cursor: pointer; opacity: 0.85; border-style: solid; }
+.bank-word-chip.assigned::after { content: " ✓"; opacity: 0.6; }
+.bank-word-chip.assigned.cat-soggetto { background: #e3f0fd; border-color: var(--blue); }
+.bank-word-chip.assigned.cat-predicato { background: #fbe3e3; border-color: var(--red); }
+.bank-word-chip.assigned.cat-oggetto { background: #fdecdc; border-color: var(--orange); }
+.bank-word-chip.assigned.cat-attributo { background: #f2e6fb; border-color: var(--purple); }
+.bank-word-chip.assigned.cat-apposizione { background: #fbe3f0; border-color: var(--pink); }
+.bank-word-chip.assigned.cat-indiretto { background: #e0f5f5; border-color: var(--teal); }
+
+.current-group-preview {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  min-height: 2.2em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.grouping-actions { text-align: center; }
+.grouping-footer { text-align: center; margin-top: 10px; }
 
 /* ---- riepilogo ---- */
 

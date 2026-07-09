@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Analisi Grammaticale</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <a href="index.html" class="home-link">🏠 Home</a>
+  <h1>📚 Analisi Grammaticale</h1>
+</header>
+
+<main id="app">
+
+  <!-- SCHERMATA 1: inserimento frasi -->
+  <section id="screen-input" class="screen">
+    <div class="settings-bar">
+      <label class="switch-label">
+        <input type="checkbox" id="toggle-hints" checked>
+        💡 Mostra i suggerimenti (esempi) durante l'analisi
+      </label>
+    </div>
+
+    <h2>Scrivi una frase</h2>
+    <textarea id="sentence-input" rows="2" placeholder="Es. Il bambino dorme."></textarea>
+    <button id="btn-extract" class="btn btn-primary">Estrai le parole ➜</button>
+
+    <div id="word-preview" class="word-preview hidden">
+      <p class="hint">Controlla le parole. Puoi modificarle o cancellarle prima di confermare.</p>
+      <div id="word-chips" class="word-chips"></div>
+      <div class="preview-actions">
+        <button id="btn-add-word" class="btn btn-secondary">➕ Aggiungi parola</button>
+        <button id="btn-confirm-sentence" class="btn btn-primary">✔ Conferma frase</button>
+        <button id="btn-cancel-sentence" class="btn btn-ghost">✖ Annulla</button>
+      </div>
+    </div>
+
+    <div id="sentence-list" class="sentence-list"></div>
+
+    <div class="input-footer">
+      <button id="btn-start-analysis" class="btn btn-success btn-large" disabled>🚀 Inizia l'analisi</button>
+    </div>
+  </section>
+
+  <!-- SCHERMATA 2: wizard di analisi -->
+  <section id="screen-wizard" class="screen hidden">
+    <div class="wizard-progress">
+      <div id="sentence-context" class="sentence-context"></div>
+      <div id="word-chips-nav" class="word-chips-nav"></div>
+    </div>
+
+    <div id="wizard-card" class="wizard-card">
+      <div id="current-word-big" class="current-word-big"></div>
+      <div id="breadcrumb" class="breadcrumb"></div>
+      <h2 id="wizard-question" class="wizard-question"></h2>
+
+      <div id="wizard-options" class="wizard-options"></div>
+
+      <div id="wizard-text-input" class="wizard-text-input hidden">
+        <input type="text" id="text-answer" autocomplete="off">
+        <button id="btn-text-continue" class="btn btn-primary">Continua ➜</button>
+      </div>
+
+      <div id="wizard-done" class="wizard-done hidden">
+        <p class="done-label">✅ Hai analizzato:</p>
+        <p id="done-summary" class="done-summary"></p>
+        <button id="btn-next-word" class="btn btn-success btn-large"></button>
+      </div>
+    </div>
+
+    <div class="wizard-nav">
+      <button id="btn-back" class="btn btn-ghost">◀ Indietro</button>
+      <button id="btn-skip" class="btn btn-skip">⏭ Non lo so, salta</button>
+    </div>
+  </section>
+
+  <!-- SCHERMATA 3: riepilogo e output -->
+  <section id="screen-summary" class="screen hidden">
+    <h2>Riepilogo dell'analisi</h2>
+    <div id="summary-content" class="summary-content"></div>
+    <div class="summary-actions">
+      <button id="btn-add-more" class="btn btn-secondary">➕ Aggiungi un'altra frase</button>
+      <button id="btn-generate-pdf" class="btn btn-primary btn-large">📄 Genera PDF</button>
+      <button id="btn-send-email" class="btn btn-primary">📧 Invia via email</button>
+      <button id="btn-restart" class="btn btn-ghost">🗑 Ricomincia da capo</button>
+    </div>
+  </section>
+
+</main>
+
+<script src="js/vendor/jspdf.umd.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/grammarTree.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
