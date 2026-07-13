@@ -3,7 +3,7 @@
 
   const STORAGE_KEY = "analisiGrammaticale_state_v1";
 
-  /** @type {{sentences: Array<{text:string, words: Array<{text:string, analysis: null|{category:string, parts:string[], display:string, incomplete:boolean}}>}>, settings: {showHints: boolean}}} */
+  /** @type {{sentences: Array<{text:string, words: Array<{text:string, analysis: null|{category:string|null, parts:string[], display:string}}>}>, settings: {showHints: boolean}}} */
   let state = { sentences: [], settings: { showHints: true } };
 
   let pendingWords = null; // array of strings while previewing a new sentence
@@ -267,8 +267,8 @@
       chip.type = "button";
       chip.className = "nav-word-chip";
       if (idx === wizard.wordIndex) chip.classList.add("active");
-      if (word.analysis) chip.classList.add(word.analysis.incomplete ? "incomplete" : "done");
-      const mark = word.analysis ? (word.analysis.incomplete ? " ⚠" : " ✓") : "";
+      if (word.analysis) chip.classList.add("done");
+      const mark = word.analysis ? " ✓" : "";
       chip.textContent = word.text + mark;
       chip.title = word.analysis ? word.analysis.display : "Non ancora analizzata";
       chip.addEventListener("click", () => {
@@ -280,13 +280,13 @@
 
   function renderBreadcrumb() {
     breadcrumbEl.innerHTML = "";
-    if (wizard.history.length === 0) return;
-    wizard.history.forEach((entry, i) => {
+    const visible = wizard.history.filter((entry) => !entry.option.skipped);
+    visible.forEach((entry, i) => {
       const chip = document.createElement("span");
-      chip.className = "crumb" + (entry.option.skipped ? " crumb-skipped" : "");
+      chip.className = "crumb";
       chip.textContent = entry.option.label;
       breadcrumbEl.appendChild(chip);
-      if (i < wizard.history.length - 1) {
+      if (i < visible.length - 1) {
         const arrow = document.createElement("span");
         arrow.className = "crumb-arrow";
         arrow.textContent = "›";
@@ -350,17 +350,16 @@
     const rootSkipped = wizard.history.length > 0 && wizard.history[0].option.skipped;
     const category = rootSkipped ? null : wizard.history[0].option.label;
     const parts = rootSkipped ? [] : wizard.history.slice(1).map((h) => h.option.value).filter((v) => v);
-    const incomplete = category === null || wizard.history.some((h) => h.option.skipped);
 
     let display;
     if (category === null) {
-      display = "❓ non analizzata (saltata)";
+      display = "(non specificata)";
     } else {
-      display = parts.length ? category + ": " + parts.join(", ") : category;
-      if (incomplete) display += "  ⚠ incompleta";
+      const categoryLabel = capitalizeFirst(category);
+      display = parts.length ? categoryLabel + " " + parts.join(", ") : categoryLabel;
     }
 
-    currentWord().analysis = { category, parts, display, incomplete };
+    currentWord().analysis = { category, parts, display };
     saveState();
 
     renderSentenceContext();
@@ -422,8 +421,7 @@
       sentence.words.forEach((word, wIdx) => {
         const li = document.createElement("li");
         const display = word.analysis ? word.analysis.display : "(non analizzata)";
-        if (word.analysis && word.analysis.incomplete) li.classList.add("incomplete-row");
-        li.innerHTML = "<strong>" + escapeHtml(word.text) + "</strong> — " + escapeHtml(display);
+        li.innerHTML = "<strong>" + escapeHtml(word.text) + "</strong> : " + escapeHtml(display);
         const editBtn = document.createElement("button");
         editBtn.className = "btn btn-ghost btn-small";
         editBtn.textContent = "✏️";
@@ -460,7 +458,7 @@
       report.addHeading((idx + 1) + ". " + sentence.text);
       sentence.words.forEach((word) => {
         const display = word.analysis ? word.analysis.display : "(non analizzata)";
-        report.addLine("• " + word.text + " — " + display);
+        report.addWordLine(word.text, display);
       });
       report.addSpacer();
     });
@@ -474,7 +472,7 @@
       lines.push((idx + 1) + ". " + sentence.text);
       sentence.words.forEach((word) => {
         const display = word.analysis ? word.analysis.display : "(non analizzata)";
-        lines.push("   • " + word.text + " — " + display);
+        lines.push("   • " + word.text + " : " + display);
       });
       lines.push("");
     });

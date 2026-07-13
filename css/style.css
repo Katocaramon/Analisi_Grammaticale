@@ -222,7 +222,6 @@ textarea#sentence-input {
 }
 .nav-word-chip.active { border-color: var(--blue); background: #eaf2fc; font-weight: bold; }
 .nav-word-chip.done { color: var(--success); }
-.nav-word-chip.incomplete { color: var(--orange); }
 
 .wizard-card {
   background: var(--card-bg);
@@ -265,7 +264,6 @@ textarea#sentence-input {
   padding: 3px 8px;
   font-size: 0.85rem;
 }
-.crumb-skipped { background: #fde4c8; font-style: italic; color: var(--muted); }
 .crumb-arrow { color: var(--muted); }
 
 .wizard-question {
@@ -405,7 +403,6 @@ textarea#sentence-input {
   border-bottom: 1px solid var(--border);
 }
 .summary-sentence li:last-child { border-bottom: none; }
-.summary-sentence li.incomplete-row { color: var(--orange); }
 
 .summary-actions { text-align: center; margin-top: 20px; }
 

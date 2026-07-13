@@ -3,7 +3,7 @@
 
   const STORAGE_KEY = "analisiLogica_state_v1";
 
-  /** @type {{sentences: Array<{text:string, words:string[], groups: Array<{wordIndices:number[], analysis:{category:string|null, parts:string[], display:string, incomplete:boolean, cls:string|null}}>}>, settings:{showHints:boolean}}} */
+  /** @type {{sentences: Array<{text:string, words:string[], groups: Array<{wordIndices:number[], analysis:{category:string|null, parts:string[], display:string, cls:string|null}}>}>, settings:{showHints:boolean}}} */
   let state = { sentences: [], settings: { showHints: true } };
 
   let pendingWords = null;
@@ -305,7 +305,7 @@
     if (unassigned.length === 0) return;
     sentence.groups.push({
       wordIndices: unassigned,
-      analysis: { category: null, parts: [], display: "❓ non classificato (saltato)", incomplete: true, cls: null }
+      analysis: { category: null, parts: [], display: "(non specificato)", cls: null }
     });
     saveState();
     wizard.selection = [];
@@ -359,13 +359,13 @@
 
   function renderBreadcrumb() {
     breadcrumbEl.innerHTML = "";
-    if (wizard.history.length === 0) return;
-    wizard.history.forEach((entry, i) => {
+    const visible = wizard.history.filter((entry) => !entry.option.skipped);
+    visible.forEach((entry, i) => {
       const chip = document.createElement("span");
-      chip.className = "crumb" + (entry.option.skipped ? " crumb-skipped" : "");
+      chip.className = "crumb";
       chip.textContent = entry.option.label;
       breadcrumbEl.appendChild(chip);
-      if (i < wizard.history.length - 1) {
+      if (i < visible.length - 1) {
         const arrow = document.createElement("span");
         arrow.className = "crumb-arrow";
         arrow.textContent = "›";
@@ -408,19 +408,18 @@
     const category = rootSkipped ? null : wizard.history[0].option.label;
     const cls = rootSkipped ? null : wizard.history[0].option.cls || null;
     const parts = rootSkipped ? [] : wizard.history.slice(1).map((h) => h.option.value).filter((v) => v);
-    const incomplete = category === null || wizard.history.some((h) => h.option.skipped);
 
     let display;
     if (category === null) {
-      display = "❓ non classificato (saltato)";
+      display = "(non specificato)";
     } else {
-      display = parts.length ? category + ": " + parts.join(", ") : category;
-      if (incomplete) display += "  ⚠ incompleto";
+      const categoryLabel = capitalizeFirst(category);
+      display = parts.length ? categoryLabel + " " + parts.join(", ") : categoryLabel;
     }
 
     const sentence = currentSentence();
     const wordIndices = wizard.selection.slice().sort((a, b) => a - b);
-    sentence.groups.push({ wordIndices, analysis: { category, parts, display, incomplete, cls } });
+    sentence.groups.push({ wordIndices, analysis: { category, parts, display, cls } });
     saveState();
 
     const groupWords = wordIndices.map((i) => sentence.words[i]).join(" ");
@@ -496,8 +495,7 @@
       orderedGroups.forEach((group) => {
         const li = document.createElement("li");
         const words = group.wordIndices.map((i) => sentence.words[i]).join(" ");
-        if (group.analysis.incomplete) li.classList.add("incomplete-row");
-        li.innerHTML = "<strong>" + escapeHtml(words) + "</strong> — " + escapeHtml(group.analysis.display);
+        li.innerHTML = "<strong>" + escapeHtml(words) + "</strong> : " + escapeHtml(group.analysis.display);
         const editBtn = document.createElement("button");
         editBtn.className = "btn btn-ghost btn-small";
         editBtn.textContent = "✏️";
@@ -536,7 +534,7 @@
       const orderedGroups = sentence.groups.slice().sort((a, b) => a.wordIndices[0] - b.wordIndices[0]);
       orderedGroups.forEach((group) => {
         const words = group.wordIndices.map((i) => sentence.words[i]).join(" ");
-        report.addLine("• " + words + " — " + group.analysis.display);
+        report.addWordLine(words, group.analysis.display);
       });
       report.addSpacer();
     });
@@ -550,7 +548,7 @@
       const orderedGroups = sentence.groups.slice().sort((a, b) => a.wordIndices[0] - b.wordIndices[0]);
       orderedGroups.forEach((group) => {
         const words = group.wordIndices.map((i) => sentence.words[i]).join(" ");
-        lines.push("   • " + words + " — " + group.analysis.display);
+        lines.push("   • " + words + " : " + group.analysis.display);
       });
       lines.push("");
     });

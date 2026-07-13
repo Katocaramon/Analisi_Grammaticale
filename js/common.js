@@ -15,6 +15,11 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function capitalizeFirst(str) {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach((el) => el.classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
@@ -90,11 +95,41 @@ function createPdfReport(title) {
     y += 14;
   }
 
+  /**
+   * Stampa "• parola : resto" con la parola in grassetto seguita dai due punti,
+   * il resto in testo normale, andando a capo se necessario.
+   */
+  function addWordLine(word, rest) {
+    const indent = marginLeft + 12;
+    const bulletBold = "• " + word + " : ";
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    const boldWidth = doc.getTextWidth(bulletBold);
+    const availWidth = pageWidth - marginLeft - indent - boldWidth;
+
+    doc.setFont("helvetica", "normal");
+    const restLines = rest ? doc.splitTextToSize(rest, Math.max(availWidth, 60)) : [""];
+
+    ensureSpace(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(bulletBold, indent, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(restLines[0] || "", indent + boldWidth, y);
+    y += 14;
+
+    for (let i = 1; i < restLines.length; i++) {
+      ensureSpace(14);
+      doc.text(restLines[i], indent + 10, y);
+      y += 14;
+    }
+  }
+
   function save(filename) {
     doc.save(filename);
   }
 
-  return { addHeading, addLine, addSpacer, save };
+  return { addHeading, addLine, addWordLine, addSpacer, save };
 }
 
 /**
